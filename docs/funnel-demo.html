@@ -51,6 +51,11 @@ var speedmin = 0;
 var mode = 'demo';
 
 if (mode == 'demo') {
+tokenText = new Point(250,130);
+timerText = new Point(50,130);
+timerVol = new Point(50,140);
+tokenVol = new Point(250,140);
+
 xspread1 = 10; xspread2 = 40;
 yspread1 =300; yspread2 = 300;
 speedmax = 3; speedmin = 2;
@@ -416,6 +421,17 @@ for(let i = 0; i < runners.length; i++){
    runners[i] = new Runner();
 }
 
+function drawVol(x,y,txt){
+  ctx.beginPath();
+  ctx.rect(x-runnerRad, y-runnerRad, 2*runnerRad, 2*runnerRad);
+  ctx.strokeStyle = "black";
+  ctx.stroke();
+  ctx.fillStyle = "yellow";
+  ctx.fill();
+  ctx.fillStyle = "black";
+  ctx.fillText(txt, x, y + (ctx.measureText('M').width/2));
+}
+
 function releaseRunner() {
 	for(let i = 0; i < runners.length; i++){
 		if (!runners[i].active) {
@@ -431,7 +447,7 @@ function init() {
 
 var ticks = 0;
 var fastPeriod = 80;
-var slowPeriod = 120;
+var slowPeriod = 140;
 var currentPeriod = fastPeriod;
 
 function draw() {
@@ -439,15 +455,20 @@ function draw() {
   ticks += 1;
   //console.log(ticks);
 
-  ctx.globalCompositeOperation = 'destination-over';
+  ctx.globalCompositeOperation = 'source-over';
   ctx.clearRect(0, 0, 300, 300); // clear canvas
-
+  ctx.font = '12px Arial';
+  ctx.textAlign = "center";
   runners.forEach(drawAndMove);
   course.draw();
 
-  ctx.strokeText(numFinishers, 10, 200);
-  ctx.strokeText(numTokens, 250, 200);
-  
+  ctx.fillStyle = "black";
+  ctx.fillText(numFinishers, timerText.x, timerText.y);
+  ctx.fillText(numTokens, tokenText.x, tokenText.y);
+
+  drawVol(timerVol.x, timerVol.y, 'T');
+  drawVol(tokenVol.x, tokenVol.y, 'F');
+
   var filled = (funnel0.count + funnel1.count)/(funnel0.runners() + funnel1.runners());
   if (filled > 0.75 && currentPeriod == fastPeriod) {
 	  console.log("Slowing down");
