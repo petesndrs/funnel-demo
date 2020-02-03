@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1> Heading for my demo </h1>
+
+<canvas id="myCanvas" width="300" height="300" style="border:1px solid #d3d3d3;">
+Your browser does not support the HTML5 canvas tag.</canvas>
+
+<script>
+
+var runnerRad = 6;
+var runnerLen = runnerRad * 2;
+var framesPerSec = 60;
+var oneLenPerSec = runnerLen / framesPerSec;
+var numFinishers = 0;
+var numTokens = 0;
+
+class Point {
+
+  constructor(x,y) {
+    this.x = x;
+    this.y = y;
+  }
+
+}
+
+class Segment {
+
+  constructor(type, more, num, start, end, overtaking, lane) {
+    this.type = type;
+    this.more = more;
+    this.num = num;
+    this.start = start;
+    this.end = end;
+	this.overtaking = overtaking;
+	this.lane = lane;
+    this.length = Math.sqrt(Math.pow(this.end.x-this.start.x, 2) + 
+                            Math.pow(this.end.y-this.start.y, 2));
+    this.runners = Math.floor(this.length / runnerLen);
+  }
+}
+
+var segments = new Array();
+var xspread1 = 0;
+var xspread2 = 0;
+var yspread1 = 0;
+var yspread2 = 0;
+var speedmax = 0;
+var speedmin = 0;
+var mode = 'demo';
+
+if (mode == 'demo') {
+xspread1 = 10; xspread2 = 40;
+yspread1 =300; yspread2 = 300;
+speedmax = 3; speedmin = 2;
+segments.push(new Segment('finish', false, 0, new Point(0,0), new Point(50,150), true, -1));
+segments.push(new Segment('prefunnel',false, 0, new Point(50,150), new Point(70,150), false, -1));
+segments.push(new Segment('funnel0', true, 0, new Point(70,150), new Point(100,100), false, 0));
+segments.push(new Segment('funnel1', true, 0, new Point(70,150), new Point(100,200), false, 1));
+segments.push(new Segment('funnel0', true, 0, new Point(100,100), new Point(150,100), false, 0));
+segments.push(new Segment('funnel0', false, 1, new Point(150,100), new Point(200,125), false, 0));
+segments.push(new Segment('funnel1', false, 1, new Point(100,200), new Point(200,200), false, 1));
+segments.push(new Segment('postfunnel0', false, 0, new Point(200,125), new Point(250,150), false, 0));
+segments.push(new Segment('postfunnel1', false, 0, new Point(200,200), new Point(250,150), false, 1));
+segments.push(new Segment('off', false, 0, new Point(250,150), new Point(400,150), true, -1));
+} else {
+}
+
+class Funnel {
+
+  constructor(name) {
+    this.name = name;
+	this.count = 0;
+	this.justopened = false;
+  }
+  
+  runners() {
+    var runners = 0;
+    for (let i=0; i<segments.length; i++){
+      if (segments[i].type == this.name) {
+          runners += segments[i].runners;
+      }
+    }
+	// Subtract 1 to avoid entrance blockage
+	return runners - 1;
+  }
+  
+  inc() {
+    this.count++;
+	console.log(this.name + " Inc " + this.count);
+	if (this.count == this.runners()) {
+	  entranceManager.nextfunnel();
+	}
+  }
+  
+  dec() {
+	  this.count--;
+	  console.log(this.name + "Dec " + this.count);
+	  numTokens++;
+  }
+}
+
+
+var funnel0 = new Funnel('funnel0');
+var funnel1 = new Funnel('funnel1');
+funnel1.draining = false;
+
+console.log("Funnel 0 = " + funnel0.runners());
+console.log("Funnel 1 = " + funnel1.runners());
+
+class EntranceManager {
+
+  constructor(funnel0, funnel1){
+    this.filling = 'funnel0'
+  }
+  
+  nextfunnel(){
+    if (this.filling == 'funnel0') {
+	  this.filling = 'funnel1';
+	  //this.redirectPrefunnel('prefunnel0','prefunnel1');
+	  console.log("FILL FUNNEL 1");
+	  funnel1.justopened = true;
+	} else {
+	  this.filling = 'funnel0';
+	  //this.redirectPrefunnel('prefunnel1','prefunnel0');
+	  console.log("FILL FUNNEL 0");
+	  funnel0.justopened = true;
+	}
+  }
+  
+}
+
+class ExitManager {
+
+  constructor(funnel0, funnel1){
+    this.draining = 'funnel0'
+  }
+  
+  nextfunnel(){
+    if (this.draining == 'funnel0') {
+	  this.draining = 'funnel1';
+	  console.log("DRAIN FUNNEL 1");
+	} else {
+	  this.draining = 'funnel0';
+	  console.log("DRAIN FUNNEL 0");
+	}
+  }
+}
+var entranceManager = new EntranceManager(funnel0, funnel1);
+var exitManager = new ExitManager(funnel0, funnel1);
+
+class Course {
+
+  constructor(segments) {
+     this.segments = segments;
+  }
+
+  speed(name) {
+    switch(name) {
+      case 'finish':
+        return oneLenPerSec * (( Math.random() * (speedmax-speedmin)) + speedmin);
+      case 'prefunnel':
+        return oneLenPerSec;
+      case 'funnel0':
+      case 'funnel1':
+        return oneLenPerSec;
+      case 'postfunnel0':
+      case 'postfunnel1':
+        return oneLenPerSec;
+      case 'off':
+        return oneLenPerSec * 2;
+    }
+  }
+
+  nextseg(segment, managed, num) {
+    switch(segment.type) {
+      case 'finish' :
+	    return this.findseg('prefunnel', 0);
+	  case 'prefunnel' :
+	    if (managed) {
+          if (entranceManager.filling == 'funnel0') return this.findseg('funnel0', 0);
+          else return this.findseg('funnel1', 0);
+		} else {
+			if (num == 0) return this.findseg('funnel0', 0);
+			if (num == 1) return this.findseg('funnel1', 0);
+		}
+      case 'funnel0' :
+	    if (!segment.more) return this.findseg('postfunnel0', 0);
+		else return this.findseg('funnel0', segment.num + 1);
+      case 'funnel1' :
+	    if (!segment.more) return this.findseg('postfunnel1', 0);
+		else return this.findseg('funnel1', segment.num + 1);
+	  case 'postfunnel0' :
+	  	return this.findseg('off', 0);
+	  case 'postfunnel1' :
+	    return this.findseg('off', 0);
+    }
+	return null;
+  }
+
+  findseg(type, num) {
+    for (let i=0; i<this.segments.length; i++){
+      if (this.segments[i].type == type &&
+          this.segments[i].num == num) {
+          return this.segments[i];
+      }
+    }
+  }
+  
+  draw() {
+	ctx.beginPath();
+	var segment=segments[0];
+	ctx.moveTo(segment.end.x, segment.end.y);
+	while ( (segment = this.nextseg(segment, false, 0)) != null) {
+		ctx.lineTo(segment.end.x, segment.end.y);
+	}
+	ctx.stroke();
+	ctx.beginPath();
+	var segment=segments[0];
+	ctx.moveTo(segment.end.x, segment.end.y);
+	while ( (segment = this.nextseg(segment, false, 1)) != null) {
+		ctx.lineTo(segment.end.x, segment.end.y);
+	}
+	ctx.stroke();
+  }
+  
+}
+
+function distance(x1,y1,x2,y2){
+	return Math.sqrt(Math.pow(x1-x2, 2) + Math.pow(y1-y2, 2)) 
+}
+
+
+var course = new Course(segments);
+
+class Runner {
+
+  constructor() {
+    this.x = 0;
+    this.y = 0;
+    this.r = 10;
+    this.dx = 0;
+    this.dy = 0;
+    this.speed = 1;
+	this.stopped = true;
+	this.active = false;
+    this.col = "";
+    this.heading = segments[0];
+    //this.start();
+    this.first = false;
+	this.finisher = 0
+  }
+
+  start() {
+	this.finisher = 0;
+	this.active = true;
+	this.stopped = false;
+    this.heading = segments[0];
+    this.x = xspread1 + Math.round(Math.random() * (xspread2-xspread1));
+    this.y = yspread1 + Math.round(Math.random() * (yspread2-yspread1));
+    this.setdxdy(course.speed(this.heading.type));
+	this.first = false;
+    switch ( Math.round(Math.random() * 4) ) {
+      case 0:
+        this.col = "brown";
+        break;
+      case 1:
+        this.col = "blue";
+        break;
+      case 2:
+        this.col = "orange";
+        break;
+      case 3:
+        this.col = "purple";
+        break;
+      case 4:
+        this.col = "pink";
+    } 
+  }
+
+  setdxdy(speed) {
+    var mag =  Math.sqrt(Math.pow(this.heading.end.x - this.x, 2) +
+                         Math.pow(this.heading.end.y - this.y, 2) );
+    this.dx = speed * (this.heading.end.x - this.x) / mag;
+    this.dy = speed * (this.heading.end.y - this.y) / mag;  
+  }
+
+  draw() {
+    ctx.beginPath();
+	if (!this.first) {
+      ctx.arc(this.x, this.y, runnerRad, 0, Math.PI * 2, true);
+	} else {
+      ctx.arc(this.x, this.y, runnerRad, 0, Math.PI, true);
+	}
+    ctx.fillStyle = this.col;
+    ctx.fill();
+  }
+
+  move() {
+    if ((Math.abs(this.heading.end.x - this.x) > Math.abs(this.dx)) ||
+        (Math.abs(this.heading.end.y - this.y) > Math.abs(this.dy)) ) {
+	  if (this.stopped) {
+		// restart logic
+		if ((this.heading.type == 'postfunnel0' || this.heading.type == 'funnel0') &&
+		     (exitManager.draining == 'funnel0')) {
+		    this.stopped = false;
+			if (this.heading.type == 'postfunnel0') funnel0.dec();
+		} else if ((this.heading.type == 'postfunnel1' || this.heading.type == 'funnel1') &&
+		     (exitManager.draining == 'funnel1')) {
+		    this.stopped = false;
+			if (this.heading.type == 'postfunnel1') funnel1.dec();
+		}
+	  }
+	  var move = true;
+	  if (!this.stopped){
+		//Look at all other runners on the segment before moving
+		if (this.heading.overtaking == false) { 
+			for (let i = 0; i < runners.length; i++){
+				if (runners[i].active && runners[i] != this && 
+				    this.heading.lane == runners[i].heading.lane) {
+					// on same lane
+					var currentDist = distance(this.x, this.y, runners[i].x, runners[i].y);
+					var ourmovedDist = distance(this.x + this.dx, this.y + this.dy, runners[i].x, runners[i].y);
+					var theirmovedDist = distance(this.x, this.y,
+					                              runners[i].x + runners[i].dx, runners[i].y + runners[i].dy);
+					// back pressure
+					var comingtogether = false;
+					if (ourmovedDist < currentDist && theirmovedDist < currentDist) {
+						console.log("COMING TOGETHER");
+						comingtogether = true;
+					}
+					if (ourmovedDist < currentDist && !comingtogether &&
+						//this.finisher > runners[i].finisher &&
+						ourmovedDist < (2*runnerRad)){
+							move = false;
+						}
+				}
+			}
+		}
+		if (move) {
+          this.x += this.dx;
+          this.y += this.dy;
+		}
+	  }
+    } else {
+      // clamp to the destination
+      //console.log("clamping " + this.heading.type + " " + this.heading.num);
+      this.x = this.heading.end.x;
+      this.y = this.heading.end.y;
+      // change heading
+      this.heading = course.nextseg(this.heading, true, 0);
+      //console.log("nextseg " + this.heading.type + " " + this.heading.num);
+	  // set increment
+      this.setdxdy(course.speed(this.heading.type));
+	  if (this.heading.type == 'prefunnel') {
+	    numFinishers++;
+		this.finisher = numFinishers;
+	  }
+	  // First in a draining funnel so stop
+	  if ((this.heading.type == 'postfunnel0' && this.first && exitManager.draining == 'funnel0') ||
+	      (this.heading.type == 'postfunnel1' && this.first && exitManager.draining == 'funnel1')) {
+		  this.stopped = true;
+		  exitManager.nextfunnel();
+		  return;
+	  }
+	  // Not a draining funnel so stop
+	  if ((this.heading.type == 'postfunnel0' && exitManager.draining != 'funnel0') ||
+	      (this.heading.type == 'postfunnel1' && exitManager.draining != 'funnel1')) {
+		  this.stopped = true;
+		  return;
+	  }
+	  // exiting funnel
+	  if (this.heading.type == 'postfunnel0') funnel0.dec();
+	  if (this.heading.type == 'postfunnel1') funnel1.dec();
+	  // entering funnel
+	  if (this.heading.type == 'funnel0' && this.heading.num == 0) {
+	    funnel0.inc();
+		if (funnel0.justopened){
+		  console.log("FUNNEL 0 OPENED");
+		  this.first = true;
+		  funnel0.justopened = false;
+		}
+	  }
+	  if (this.heading.type == 'funnel1' && this.heading.num == 0) {
+	    funnel1.inc();
+		if (funnel1.justopened){
+		  console.log("FUNNEL 1 OPENED");
+		  this.first = true;
+		  funnel1.justopened = false;
+		}
+	  }
+    }
+  }
+
+  recycle(cx,cy) {
+    if (this.x-this.r > cx 
+        || this.y-this.r > cy) {
+	  this.active = false;
+    }
+  }
+}
+
+function drawAndMove(item, index, arr) {
+  if (item.active) {
+    item.draw();
+    item.move();
+    item.recycle(300, 300);
+  }
+}
+
+var ctx = document.getElementById('myCanvas').getContext('2d');
+
+var runners = new Array(50);
+for(let i = 0; i < runners.length; i++){
+   runners[i] = new Runner();
+}
+
+function releaseRunner() {
+	for(let i = 0; i < runners.length; i++){
+		if (!runners[i].active) {
+			runners[i].start();
+			break;
+		}
+	}
+}
+
+function init() {
+  window.requestAnimationFrame(draw);
+}
+
+var ticks = 0;
+var fastPeriod = 80;
+var slowPeriod = 120;
+var currentPeriod = fastPeriod;
+
+function draw() {
+
+  ticks += 1;
+  //console.log(ticks);
+
+  ctx.globalCompositeOperation = 'destination-over';
+  ctx.clearRect(0, 0, 300, 300); // clear canvas
+
+  runners.forEach(drawAndMove);
+  course.draw();
+
+  ctx.strokeText(numFinishers, 10, 200);
+  ctx.strokeText(numTokens, 250, 200);
+  
+  var filled = (funnel0.count + funnel1.count)/(funnel0.runners() + funnel1.runners());
+  if (filled > 0.75 && currentPeriod == fastPeriod) {
+	  console.log("Slowing down");
+	  currentPeriod = slowPeriod;
+  }
+  if (filled < 0.25 && currentPeriod == slowPeriod) {
+	  console.log("Speeding up");
+	  currentPeriod = fastPeriod;
+  }
+  
+  if (ticks%currentPeriod == 0) {
+      console.log("filled = " + filled);
+	  releaseRunner();
+  }
+
+  window.requestAnimationFrame(draw);
+}
+
+init();
+
+</script> 
+
+</body>
+</html>
