@@ -51,12 +51,13 @@ var speedmin = 0;
 var mode = 'demo';
 
 if (mode == 'demo') {
-tokenText = new Point(250,130);
-timerText = new Point(50,130);
-timerVol = new Point(50,140);
-tokenVol = new Point(250,140);
-
-xspread1 = 10; xspread2 = 40;
+tokenText = new Point(250, 130);
+timerText = new Point(50, 130);
+timerVol = new Point(50, 140);
+tokenVol = new Point(250, 140);
+managerVol0 = new Point(70, 170);
+managerVol1 = new Point(70, 120);
+xspread1 = 10; xspread2 = 70;
 yspread1 =300; yspread2 = 300;
 speedmax = 3; speedmin = 2;
 segments.push(new Segment('finish', false, 0, new Point(0,0), new Point(50,150), true, -1));
@@ -468,6 +469,11 @@ function draw() {
 
   drawVol(timerVol.x, timerVol.y, 'T');
   drawVol(tokenVol.x, tokenVol.y, 'F');
+  if (entranceManager.filling == 'funnel0') {
+    drawVol(managerVol0.x, managerVol0.y, 'M');
+  } else if (entranceManager.filling == 'funnel1') {
+    drawVol(managerVol1.x, managerVol1.y, 'M');
+  }
 
   var filled = (funnel0.count + funnel1.count)/(funnel0.runners() + funnel1.runners());
   if (filled > 0.75 && currentPeriod == fastPeriod) {
