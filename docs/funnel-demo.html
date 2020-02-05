@@ -294,13 +294,19 @@ class Runner {
 
   draw() {
     ctx.beginPath();
+	ctx.fillStyle = this.col;
 	if (!this.first) {
-      ctx.arc(this.x, this.y, runnerRad, 0, Math.PI * 2, true);
+      ctx.arc(this.x, this.y, runnerRad, 0, Math.PI * 2, false);
+	  ctx.fill();
 	} else {
-      ctx.arc(this.x, this.y, runnerRad, 0, Math.PI, true);
+      ctx.arc(this.x, this.y, runnerRad, 0, Math.PI, false);
+	  ctx.fill();
+	  ctx.beginPath();
+	  ctx.arc(this.x, this.y, runnerRad, Math.PI / 2, Math.PI * 3 / 2, false);
+	  ctx.fill();
+	  ctx.fillStyle = "red";
+	  ctx.fillRect(this.x + 1, this.y - runnerRad - 1, runnerRad, runnerRad);
 	}
-    ctx.fillStyle = this.col;
-    ctx.fill();
   }
 
   move() {
