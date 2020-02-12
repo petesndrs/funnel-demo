@@ -2,7 +2,13 @@
 <html>
 <body>
 
-<h1> Heading for my demo </h1>
+<h1> parkrun double funnel </h1>
+
+<strong>Key:</strong><br>
+<strong>[T]</strong> Timekeeper <br>
+<strong>[M]</strong> Funnel Manager <br>
+<strong>[P]</strong> Position Tokens <br>
+<p>
 
 <canvas id="myCanvas" width="300" height="300" style="border:1px solid #d3d3d3;">
 Your browser does not support the HTML5 canvas tag.</canvas>
@@ -48,7 +54,7 @@ var yspread1 = 0;
 var yspread2 = 0;
 var speedmax = 0;
 var speedmin = 0;
-var mode = 'demo';
+var mode = 'dulwich';
 
 if (mode == 'demo') {
 tokenText = new Point(250, 130);
@@ -71,6 +77,30 @@ segments.push(new Segment('postfunnel0', false, 0, new Point(200,125), new Point
 segments.push(new Segment('postfunnel1', false, 0, new Point(200,200), new Point(250,150), false, 1));
 segments.push(new Segment('off', false, 0, new Point(250,150), new Point(400,150), true, -1));
 } else {
+tokenText = new Point(100, 10);
+timerText = new Point(50, 170);
+timerVol = new Point(50, 180);
+tokenVol = new Point(100, 20);
+managerVol0 = new Point(70, 210);
+managerVol1 = new Point(70, 160);
+xspread1 = 10; xspread2 = 70;
+yspread1 =300; yspread2 = 300;
+speedmax = 3; speedmin = 2;
+segments.push(new Segment('finish', false, 0, new Point(0,0), new Point(50,200), true, -1));
+segments.push(new Segment('prefunnel',false, 0, new Point(50,200), new Point(70,190), false, -1));
+
+segments.push(new Segment('funnel0', true, 0, new Point(70,190), new Point(80,180), false, 0));
+segments.push(new Segment('funnel0', true, 1, new Point(80,180), new Point(160,100), false, 0));
+segments.push(new Segment('funnel0', false, 2, new Point(160,100), new Point(100,50), false, 0));
+
+segments.push(new Segment('funnel1', true, 0, new Point(70,190), new Point(80,200), false, 1));
+segments.push(new Segment('funnel1', true, 1, new Point(80,200), new Point(180,100), false, 1));
+segments.push(new Segment('funnel1', false, 2, new Point(180,100), new Point(120,50), false, 1));
+
+segments.push(new Segment('postfunnel0', false, 0, new Point(100,50), new Point(100,30), false, 0));
+segments.push(new Segment('postfunnel1', false, 0, new Point(120,50), new Point(100,30), false, 1));
+segments.push(new Segment('off', false, 0, new Point(100,30), new Point(400,30), true, -1));
+
 }
 
 class Funnel {
@@ -478,7 +508,7 @@ function draw() {
   ctx.fillText(numTokens, tokenText.x, tokenText.y);
 
   drawVol(timerVol.x, timerVol.y, 'T');
-  drawVol(tokenVol.x, tokenVol.y, 'F');
+  drawVol(tokenVol.x, tokenVol.y, 'P');
   if (entranceManager.filling == 'funnel0') {
     drawVol(managerVol0.x, managerVol0.y, 'M');
   } else if (entranceManager.filling == 'funnel1') {
