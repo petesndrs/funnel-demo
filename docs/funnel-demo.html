@@ -113,7 +113,7 @@ class Funnel {
     this.justopened = false;
     this.runnersMax = this.runners();
   }
-  
+
   runners() {
     var totalLen = 0;
     for (let i=0; i<segments.length; i++){
@@ -124,7 +124,7 @@ class Funnel {
     // Subtract 2 to avoid entrance blockage
     return Math.floor(totalLen / runnerLen) - 2;
   }
-  
+
   inc() {
     this.count++;
     if (debug) {
@@ -134,7 +134,7 @@ class Funnel {
       entranceManager.nextfunnel();
     }
   }
-  
+
   dec() {
     this.count--;
     if (debug) {
@@ -159,25 +159,25 @@ class EntranceManager {
   constructor(funnel0, funnel1){
     this.filling = 'funnel0'
   }
-  
+
   nextfunnel(){
     if (this.filling == 'funnel0') {
-	  this.filling = 'funnel1';
-	  //this.redirectPrefunnel('prefunnel0','prefunnel1');
-          if (debug) {
-	    console.log("FILL FUNNEL 1");
-          }
-	  funnel1.justopened = true;
-	} else {
-	  this.filling = 'funnel0';
-	  //this.redirectPrefunnel('prefunnel1','prefunnel0');
-          if (debug) {
-	    console.log("FILL FUNNEL 0");
-          }
-	  funnel0.justopened = true;
-	}
+      this.filling = 'funnel1';
+      //this.redirectPrefunnel('prefunnel0','prefunnel1');
+      if (debug) {
+        console.log("FILL FUNNEL 1");
+      }
+      funnel1.justopened = true;
+    } else {
+      this.filling = 'funnel0';
+      //this.redirectPrefunnel('prefunnel1','prefunnel0');
+      if (debug) {
+        console.log("FILL FUNNEL 0");
+      }
+      funnel0.justopened = true;
+    }
   }
-  
+
 }
 
 class ExitManager {
@@ -188,16 +188,16 @@ class ExitManager {
   
   nextfunnel(){
     if (this.draining == 'funnel0') {
-	  this.draining = 'funnel1';
-          if (debug) {
-	    console.log("DRAIN FUNNEL 1");
-          }
-	} else {
-	  this.draining = 'funnel0';
-          if (debug) {
-	    console.log("DRAIN FUNNEL 0");
-          }
-	}
+      this.draining = 'funnel1';
+      if (debug) {
+        console.log("DRAIN FUNNEL 1");
+      }
+    } else {
+      this.draining = 'funnel0';
+      if (debug) {
+        console.log("DRAIN FUNNEL 0");
+      }
+    }
   }
 }
 
@@ -230,27 +230,27 @@ class Course {
   nextseg(segment, managed, num) {
     switch(segment.type) {
       case 'finish' :
-	    return this.findseg('prefunnel', 0);
-	  case 'prefunnel' :
-	    if (managed) {
+        return this.findseg('prefunnel', 0);
+      case 'prefunnel' :
+        if (managed) {
           if (entranceManager.filling == 'funnel0') return this.findseg('funnel0', 0);
           else return this.findseg('funnel1', 0);
-		} else {
-			if (num == 0) return this.findseg('funnel0', 0);
-			if (num == 1) return this.findseg('funnel1', 0);
-		}
+        } else {
+            if (num == 0) return this.findseg('funnel0', 0);
+            if (num == 1) return this.findseg('funnel1', 0);
+        }
       case 'funnel0' :
-	    if (!segment.more) return this.findseg('postfunnel0', 0);
-		else return this.findseg('funnel0', segment.num + 1);
+        if (!segment.more) return this.findseg('postfunnel0', 0);
+        else return this.findseg('funnel0', segment.num + 1);
       case 'funnel1' :
-	    if (!segment.more) return this.findseg('postfunnel1', 0);
-		else return this.findseg('funnel1', segment.num + 1);
-	  case 'postfunnel0' :
-	  	return this.findseg('off', 0);
-	  case 'postfunnel1' :
-	    return this.findseg('off', 0);
+        if (!segment.more) return this.findseg('postfunnel1', 0);
+        else return this.findseg('funnel1', segment.num + 1);
+      case 'postfunnel0' :
+        return this.findseg('off', 0);
+      case 'postfunnel1' :
+        return this.findseg('off', 0);
     }
-	return null;
+    return null;
   }
 
   findseg(type, num) {
@@ -261,30 +261,28 @@ class Course {
       }
     }
   }
-  
+
   draw() {
-	ctx.beginPath();
-	var segment=segments[0];
-	ctx.moveTo(segment.end.x, segment.end.y);
-	while ( (segment = this.nextseg(segment, false, 0)) != null) {
-		ctx.lineTo(segment.end.x, segment.end.y);
-	}
-	ctx.stroke();
-	ctx.beginPath();
-	var segment=segments[0];
-	ctx.moveTo(segment.end.x, segment.end.y);
-	while ( (segment = this.nextseg(segment, false, 1)) != null) {
-		ctx.lineTo(segment.end.x, segment.end.y);
-	}
-	ctx.stroke();
+    ctx.beginPath();
+    var segment=segments[0];
+    ctx.moveTo(segment.end.x, segment.end.y);
+    while ( (segment = this.nextseg(segment, false, 0)) != null) {
+        ctx.lineTo(segment.end.x, segment.end.y);
+    }
+    ctx.stroke();
+    ctx.beginPath();
+    var segment=segments[0];
+    ctx.moveTo(segment.end.x, segment.end.y);
+    while ( (segment = this.nextseg(segment, false, 1)) != null) {
+        ctx.lineTo(segment.end.x, segment.end.y);
+    }
+    ctx.stroke();
   }
-  
 }
 
 function distance(x1,y1,x2,y2){
-	return Math.sqrt(Math.pow(x1-x2, 2) + Math.pow(y1-y2, 2)) 
+    return Math.sqrt(Math.pow(x1-x2, 2) + Math.pow(y1-y2, 2)) 
 }
-
 
 var course = new Course(segments);
 
@@ -366,50 +364,50 @@ class Runner {
     if ((Math.abs(this.heading.end.x - this.x) > Math.abs(this.dx)) ||
         (Math.abs(this.heading.end.y - this.y) > Math.abs(this.dy)) ) {
       if (this.stopped) {
-	// restart logic
-	if ((this.heading.type == 'postfunnel0' || this.heading.type == 'funnel0') &&
-	     (exitManager.draining == 'funnel0')) {
-	    this.stopped = false;
-		if (this.heading.type == 'postfunnel0') funnel0.dec();
-		} else if ((this.heading.type == 'postfunnel1' || this.heading.type == 'funnel1') &&
-		     (exitManager.draining == 'funnel1')) {
-		    this.stopped = false;
-			if (this.heading.type == 'postfunnel1') funnel1.dec();
-		}
-	  }
-	  var move = true;
-	  if (!this.stopped){
-		//Look at all other runners on the segment before moving
-		if (this.heading.overtaking == false) { 
-			for (let i = 0; i < runners.length; i++){
-				if (runners[i].active && runners[i] != this && 
-				    this.heading.lane == runners[i].heading.lane) {
-					// on same lane
-					var currentDist = distance(this.x, this.y, runners[i].x, runners[i].y);
-					var ourmovedDist = distance(this.x + this.dx, this.y + this.dy, runners[i].x, runners[i].y);
-					var theirmovedDist = distance(this.x, this.y,
-					                              runners[i].x + runners[i].dx, runners[i].y + runners[i].dy);
-					// back pressure
-					var comingtogether = false;
-					if (ourmovedDist < currentDist && theirmovedDist < currentDist) {
-                                                if (debug) {
-						  console.log("COMING TOGETHER");
-                                                }
-						comingtogether = true;
-					}
-					if (ourmovedDist < currentDist && !comingtogether &&
-						//this.finisher > runners[i].finisher &&
-						ourmovedDist < (2*runnerRad)){
-							move = false;
-						}
-				}
-			}
-		}
-		if (move) {
+        // restart logic
+        if ((this.heading.type == 'postfunnel0' || this.heading.type == 'funnel0') &&
+             (exitManager.draining == 'funnel0')) {
+          this.stopped = false;
+          if (this.heading.type == 'postfunnel0') funnel0.dec();
+        } else if ((this.heading.type == 'postfunnel1' || this.heading.type == 'funnel1') &&
+            (exitManager.draining == 'funnel1')) {
+          this.stopped = false;
+          if (this.heading.type == 'postfunnel1') funnel1.dec();
+        }
+      }
+      var move = true;
+      if (!this.stopped){
+        //Look at all other runners on the segment before moving
+        if (this.heading.overtaking == false) { 
+          for (let i = 0; i < runners.length; i++){
+            if (runners[i].active && runners[i] != this && 
+              this.heading.lane == runners[i].heading.lane) {
+              // on same lane
+              var currentDist = distance(this.x, this.y, runners[i].x, runners[i].y);
+              var ourmovedDist = distance(this.x + this.dx, this.y + this.dy, runners[i].x, runners[i].y);
+              var theirmovedDist = distance(this.x, this.y,
+                                            runners[i].x + runners[i].dx, runners[i].y + runners[i].dy);
+              // back pressure
+              var comingtogether = false;
+              if (ourmovedDist < currentDist && theirmovedDist < currentDist) {
+                if (debug) {
+                  console.log("COMING TOGETHER");
+                }
+                comingtogether = true;
+              }
+              if (ourmovedDist < currentDist && !comingtogether &&
+                //this.finisher > runners[i].finisher &&
+                ourmovedDist < (2*runnerRad)){
+                move = false;
+              }
+            }
+          }
+        }
+        if (move) {
           this.x += this.dx;
           this.y += this.dy;
-		}
-	  }
+        }
+      }
     } else {
       // clamp to the destination
       //console.log("clamping " + this.heading.type + " " + this.heading.num);
@@ -420,62 +418,62 @@ class Runner {
       //console.log("nextseg " + this.heading.type + " " + this.heading.num);
       // set increment
       this.setdxdy(course.speed(this.heading.type));
-	  if (this.heading.type == 'prefunnel') {
-	    numFinishers++;
-		this.finisher = numFinishers;
-	  }
-	  // First in a draining funnel so stop
-	  if ((this.heading.type == 'postfunnel0' && this.first && exitManager.draining == 'funnel0') ||
-	      (this.heading.type == 'postfunnel1' && this.first && exitManager.draining == 'funnel1')) {
-		  this.stopped = true;
-		  exitManager.nextfunnel();
-		  return;
-	  }
-	  // Not a draining funnel so stop
-	  if ((this.heading.type == 'postfunnel0' && exitManager.draining != 'funnel0') ||
-	      (this.heading.type == 'postfunnel1' && exitManager.draining != 'funnel1')) {
-		  this.stopped = true;
-		  return;
-	  }
-	  // exiting funnel
-	  if (this.heading.type == 'postfunnel0') funnel0.dec();
-	  if (this.heading.type == 'postfunnel1') funnel1.dec();
-	  // entering funnel
-	  if (this.heading.type == 'funnel0' && this.heading.num == 0) {
-	    funnel0.inc();
-		if (funnel0.justopened){
-                  if (debug) {
-		    console.log("FUNNEL 0 OPENED");
-                  }
-		  this.first = true;
-                  //this.dx *= 1.4;
-                  //this.dy *= 1.4;
-		  funnel0.justopened = false;
-		}
-	  }
-	  if (this.heading.type == 'funnel1' && this.heading.num == 0) {
-	    funnel1.inc();
-		if (funnel1.justopened){
-                  if (debug) {
-		    console.log("FUNNEL 1 OPENED");
-                  }
-		  this.first = true;
-                  //this.dx *= 1.4;
-                  //this.dy *= 1.4;
-		  funnel1.justopened = false;
-		}
-	  }
-	  // past tokens
-	  if (this.heading.type == 'off') {
-	    this.first = false;
-	  }
+      if (this.heading.type == 'prefunnel') {
+        numFinishers++;
+        this.finisher = numFinishers;
+      }
+      // First in a draining funnel so stop
+      if ((this.heading.type == 'postfunnel0' && this.first && exitManager.draining == 'funnel0') ||
+          (this.heading.type == 'postfunnel1' && this.first && exitManager.draining == 'funnel1')) {
+        this.stopped = true;
+        exitManager.nextfunnel();
+        return;
+      }
+      // Not a draining funnel so stop
+      if ((this.heading.type == 'postfunnel0' && exitManager.draining != 'funnel0') ||
+          (this.heading.type == 'postfunnel1' && exitManager.draining != 'funnel1')) {
+        this.stopped = true;
+        return;
+      }
+      // exiting funnel
+      if (this.heading.type == 'postfunnel0') funnel0.dec();
+      if (this.heading.type == 'postfunnel1') funnel1.dec();
+      // entering funnel
+      if (this.heading.type == 'funnel0' && this.heading.num == 0) {
+        funnel0.inc();
+        if (funnel0.justopened){
+          if (debug) {
+            console.log("FUNNEL 0 OPENED");
+          }
+          this.first = true;
+          //this.dx *= 1.4;
+          //this.dy *= 1.4;
+          funnel0.justopened = false;
+        }
+      }
+      if (this.heading.type == 'funnel1' && this.heading.num == 0) {
+        funnel1.inc();
+        if (funnel1.justopened){
+          if (debug) {
+            console.log("FUNNEL 1 OPENED");
+          }
+          this.first = true;
+          //this.dx *= 1.4;
+          //this.dy *= 1.4;
+          funnel1.justopened = false;
+        }
+      }
+      // past tokens
+      if (this.heading.type == 'off') {
+        this.first = false;
+      }
     }
   }
 
   recycle(cx,cy) {
     if (this.x-this.r > cx 
         || this.y-this.r > cy) {
-	  this.active = false;
+      this.active = false;
     }
   }
 }
@@ -538,36 +536,35 @@ function drawFixtures(){
 }
 
 function resetContext(){
-   ctx.lineJoin = "round";
-   ctx.lineWidth = 1;
-   ctx.lineJoin = "bevel";
-   ctx.fillStyle = "black";
-   ctx.strokeStyle = "black";
+  ctx.lineJoin = "round";
+  ctx.lineWidth = 1;
+  ctx.lineJoin = "bevel";
+  ctx.fillStyle = "black";
+  ctx.strokeStyle = "black";
 }
 
 function releaseRunner() {
-	for(let i = 0; i < runners.length; i++){
-		if (!runners[i].active) {
-			runners[i].start();
-			break;
-		}
-	}
+  for(let i = 0; i < runners.length; i++){
+    if (!runners[i].active) {
+      runners[i].start();
+      break;
+    }
+  }
 }
 
 function drawGrid(width){
-    for (var x = 0; x <= 300; x += width) {
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, 300);
-    }
+  for (var x = 0; x <= 300; x += width) {
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, 300);
+  }
 
+  for (var x = 0; x <= 300; x += width) {
+    ctx.moveTo(0, x);
+    ctx.lineTo(300, x);
+  }
 
-    for (var x = 0; x <= 300; x += width) {
-        ctx.moveTo(0, x);
-        ctx.lineTo(300, x);
-    }
-
-    ctx.strokeStyle = "grey";
-    ctx.stroke();
+  ctx.strokeStyle = "grey";
+  ctx.stroke();
 }
 
 
@@ -605,6 +602,7 @@ function draw() {
 
   drawVol(timerVol.x, timerVol.y, 'T');
   drawVol(tokenVol.x, tokenVol.y, 'P');
+
   if (entranceManager.filling == 'funnel0') {
     drawVol(managerVol0.x, managerVol0.y, 'M');
   } else if (entranceManager.filling == 'funnel1') {
@@ -613,23 +611,23 @@ function draw() {
 
   var filled = (funnel0.count + funnel1.count)/(funnel0.runnersMax + funnel1.runnersMax);
   if (filled > 0.75 && currentPeriod == fastPeriod) {
-          if (debug) {
-        	  console.log("Slowing down");
-          }
-	  currentPeriod = slowPeriod;
+    if (debug) {
+      console.log("Slowing down");
+    }
+    currentPeriod = slowPeriod;
   }
   if (filled < 0.25 && currentPeriod == slowPeriod) {
-          if (debug) {
-	    console.log("Speeding up");
-          }
-	  currentPeriod = fastPeriod;
+    if (debug) {
+      console.log("Speeding up");
+    }
+    currentPeriod = fastPeriod;
   }
   
   if (ticks%currentPeriod == 0) {
-      if (debug) {
-        console.log("filled = " + filled);
-      }
-	  releaseRunner();
+    if (debug) {
+      console.log("filled = " + filled);
+    }
+    releaseRunner();
   }
 
   window.requestAnimationFrame(draw);
