@@ -47,7 +47,13 @@ class Segment {
   }
 }
 
-var segments = new Array();
+var segments = [];
+var tokenText;
+var timerText;
+var timerVol;
+var tokenVol;
+var managerVol0;
+var managerVol1;
 var xspread1 = 0;
 var xspread2 = 0;
 var yspread1 = 0;
@@ -156,7 +162,7 @@ if (debug) {
 class EntranceManager {
 
   constructor(funnel0, funnel1){
-    this.filling = 'funnel0'
+    this.filling = 'funnel0';
   }
 
   nextfunnel(){
@@ -182,7 +188,7 @@ class EntranceManager {
 class ExitManager {
 
   constructor(funnel0, funnel1){
-    this.draining = 'funnel0'
+    this.draining = 'funnel0';
   }
   
   nextfunnel(){
@@ -270,7 +276,7 @@ class Course {
     }
     ctx.stroke();
     ctx.beginPath();
-    var segment=segments[0];
+    segment=segments[0];
     ctx.moveTo(segment.end.x, segment.end.y);
     while ( (segment = this.nextseg(segment, false, 1)) != null) {
         ctx.lineTo(segment.end.x, segment.end.y);
@@ -280,7 +286,7 @@ class Course {
 }
 
 function distance(x1,y1,x2,y2){
-    return Math.sqrt(Math.pow(x1-x2, 2) + Math.pow(y1-y2, 2)) 
+    return Math.sqrt(Math.pow(x1-x2, 2) + Math.pow(y1-y2, 2));
 }
 
 var course = new Course(segments);
@@ -297,20 +303,20 @@ class Runner {
     this.stopped = true;
     this.active = false;
     this.col = "";
-    this.heading = segments[0];
+    this.segment = segments[0];
     //this.start();
     this.first = false;
-    this.finisher = 0
+    this.finisher = 0;
   }
 
   start() {
     this.finisher = 0;
     this.active = true;
     this.stopped = false;
-    this.heading = segments[0];
+    this.segment = segments[0];
     this.x = xspread1 + Math.round(Math.random() * (xspread2-xspread1));
     this.y = yspread1 + Math.round(Math.random() * (yspread2-yspread1));
-    this.setdxdy(course.speed(this.heading.type));
+    this.setdxdy(course.speed(this.segment.type));
     this.first = false;
     switch ( Math.round(Math.random() * 4) ) {
       case 0:
@@ -331,9 +337,9 @@ class Runner {
   }
 
   setdxdy(speed) {
-    var mag = distance(this.heading.end.x, this.heading.end.y, this.x, this.y);
-    this.dx = speed * (this.heading.end.x - this.x) / mag;
-    this.dy = speed * (this.heading.end.y - this.y) / mag;  
+    var mag = distance(this.segment.end.x, this.segment.end.y, this.x, this.y);
+    this.dx = speed * (this.segment.end.x - this.x) / mag;
+    this.dy = speed * (this.segment.end.y - this.y) / mag;  
     // boost if first in funnel
     if (this.first) {
       this.dx *= 1.4;
@@ -359,27 +365,27 @@ class Runner {
   }
 
   move() {
-    if ((Math.abs(this.heading.end.x - this.x) > Math.abs(this.dx)) ||
-        (Math.abs(this.heading.end.y - this.y) > Math.abs(this.dy)) ) {
+    if ((Math.abs(this.segment.end.x - this.x) > Math.abs(this.dx)) ||
+        (Math.abs(this.segment.end.y - this.y) > Math.abs(this.dy)) ) {
       if (this.stopped) {
         // restart logic
-        if ((this.heading.type == 'postfunnel0' || this.heading.type == 'funnel0') &&
+        if ((this.segment.type == 'postfunnel0' || this.segment.type == 'funnel0') &&
              (exitManager.draining == 'funnel0')) {
           this.stopped = false;
-          if (this.heading.type == 'postfunnel0') funnel0.dec();
-        } else if ((this.heading.type == 'postfunnel1' || this.heading.type == 'funnel1') &&
+          if (this.segment.type == 'postfunnel0') funnel0.dec();
+        } else if ((this.segment.type == 'postfunnel1' || this.segment.type == 'funnel1') &&
             (exitManager.draining == 'funnel1')) {
           this.stopped = false;
-          if (this.heading.type == 'postfunnel1') funnel1.dec();
+          if (this.segment.type == 'postfunnel1') funnel1.dec();
         }
       }
       var move = true;
       if (!this.stopped){
         //Look at all other runners on the segment before moving
-        if (this.heading.overtaking == false) { 
+        if (this.segment.overtaking == false) { 
           for (let i = 0; i < runners.length; i++){
             if (runners[i].active && runners[i] != this && 
-              this.heading.lane == runners[i].heading.lane) {
+              this.segment.lane == runners[i].segment.lane) {
               // on same lane
               var currentDist = distance(this.x, this.y, runners[i].x, runners[i].y);
               var ourmovedDist = distance(this.x + this.dx, this.y + this.dy, runners[i].x, runners[i].y);
@@ -408,36 +414,36 @@ class Runner {
       }
     } else {
       // clamp to the destination
-      //console.log("clamping " + this.heading.type + " " + this.heading.num);
-      this.x = this.heading.end.x;
-      this.y = this.heading.end.y;
-      // change heading
-      this.heading = course.nextseg(this.heading, true, 0);
-      //console.log("nextseg " + this.heading.type + " " + this.heading.num);
+      //console.log("clamping " + this.segment.type + " " + this.segment.num);
+      this.x = this.segment.end.x;
+      this.y = this.segment.end.y;
+      // change segment
+      this.segment = course.nextseg(this.segment, true, 0);
+      //console.log("nextseg " + this.segment.type + " " + this.segment.num);
       // set increment
-      this.setdxdy(course.speed(this.heading.type));
-      if (this.heading.type == 'prefunnel') {
+      this.setdxdy(course.speed(this.segment.type));
+      if (this.segment.type == 'prefunnel') {
         numFinishers++;
         this.finisher = numFinishers;
       }
       // First in a draining funnel so stop
-      if ((this.heading.type == 'postfunnel0' && this.first && exitManager.draining == 'funnel0') ||
-          (this.heading.type == 'postfunnel1' && this.first && exitManager.draining == 'funnel1')) {
+      if ((this.segment.type == 'postfunnel0' && this.first && exitManager.draining == 'funnel0') ||
+          (this.segment.type == 'postfunnel1' && this.first && exitManager.draining == 'funnel1')) {
         this.stopped = true;
         exitManager.nextfunnel();
         return;
       }
       // Not a draining funnel so stop
-      if ((this.heading.type == 'postfunnel0' && exitManager.draining != 'funnel0') ||
-          (this.heading.type == 'postfunnel1' && exitManager.draining != 'funnel1')) {
+      if ((this.segment.type == 'postfunnel0' && exitManager.draining != 'funnel0') ||
+          (this.segment.type == 'postfunnel1' && exitManager.draining != 'funnel1')) {
         this.stopped = true;
         return;
       }
       // exiting funnel
-      if (this.heading.type == 'postfunnel0') funnel0.dec();
-      if (this.heading.type == 'postfunnel1') funnel1.dec();
+      if (this.segment.type == 'postfunnel0') funnel0.dec();
+      if (this.segment.type == 'postfunnel1') funnel1.dec();
       // entering funnel
-      if (this.heading.type == 'funnel0' && this.heading.num == 0) {
+      if (this.segment.type == 'funnel0' && this.segment.num == 0) {
         funnel0.inc();
         if (funnel0.justopened){
           if (debug) {
@@ -446,10 +452,10 @@ class Runner {
           this.first = true;
           funnel0.justopened = false;
           // recalc speed
-          this.setdxdy(course.speed(this.heading.type));
+          this.setdxdy(course.speed(this.segment.type));
         }
       }
-      if (this.heading.type == 'funnel1' && this.heading.num == 0) {
+      if (this.segment.type == 'funnel1' && this.segment.num == 0) {
         funnel1.inc();
         if (funnel1.justopened){
           if (debug) {
@@ -458,19 +464,19 @@ class Runner {
           this.first = true;
           funnel1.justopened = false;
           // recalc speed
-          this.setdxdy(course.speed(this.heading.type));
+          this.setdxdy(course.speed(this.segment.type));
         }
       }
       // past tokens
-      if (this.heading.type == 'off') {
+      if (this.segment.type == 'off') {
         this.first = false;
       }
     }
   }
 
   recycle(cx,cy) {
-    if (this.x-this.r > cx 
-        || this.y-this.r > cy) {
+    if (this.x-this.r > cx ||
+        this.y-this.r > cy) {
       this.active = false;
     }
   }
@@ -541,7 +547,7 @@ function resetContext(){
   ctx.strokeStyle = "black";
 }
 
-function releaseRunner() {
+function releaseRunner(){
   for(let i = 0; i < runners.length; i++){
     if (!runners[i].active) {
       runners[i].start();
@@ -556,7 +562,7 @@ function drawGrid(width){
     ctx.lineTo(x, 300);
   }
 
-  for (var x = 0; x <= 300; x += width) {
+  for (x = 0; x <= 300; x += width) {
     ctx.moveTo(0, x);
     ctx.lineTo(300, x);
   }
@@ -621,7 +627,7 @@ function draw() {
     currentPeriod = fastPeriod;
   }
   
-  if (ticks%currentPeriod == 0) {
+  if ( (ticks%currentPeriod) == 0) {
     if (debug) {
       console.log("filled = " + filled);
     }
