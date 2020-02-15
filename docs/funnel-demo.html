@@ -335,10 +335,10 @@ class Runner {
     this.dx = speed * (this.heading.end.x - this.x) / mag;
     this.dy = speed * (this.heading.end.y - this.y) / mag;  
     // boost if first in funnel
-    //if (this.first) {
-    //  this.dx *= 1.4;
-    //  this.dy *= 1.4;
-    //}
+    if (this.first) {
+      this.dx *= 1.4;
+      this.dy *= 1.4;
+    }
   }
 
   draw() {
@@ -444,9 +444,9 @@ class Runner {
             console.log("FUNNEL 0 OPENED");
           }
           this.first = true;
-          //this.dx *= 1.4;
-          //this.dy *= 1.4;
           funnel0.justopened = false;
+          // recalc speed
+          this.setdxdy(course.speed(this.heading.type));
         }
       }
       if (this.heading.type == 'funnel1' && this.heading.num == 0) {
@@ -456,9 +456,9 @@ class Runner {
             console.log("FUNNEL 1 OPENED");
           }
           this.first = true;
-          //this.dx *= 1.4;
-          //this.dy *= 1.4;
           funnel1.justopened = false;
+          // recalc speed
+          this.setdxdy(course.speed(this.heading.type));
         }
       }
       // past tokens
