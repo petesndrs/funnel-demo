@@ -5,15 +5,17 @@
 <h1> parkrun double funnel </h1>
 
 <strong>Key:</strong><br>
-<strong>[T]</strong> Timekeeper <br>
-<strong>[M]</strong> Funnel Manager <br>
-<strong>[P]</strong> Position Tokens <br>
+<span style="background-color:yellow"><strong>[T]</strong></span> Timekeeper <br>
+<span style="background-color:yellow"><strong>[M]</strong></span> Funnel Manager <br>
+<span style="background-color:yellow"><strong>[P]</strong></span> Position Tokens <br>
 <p>
 
 <canvas id="myCanvas" width="300" height="300" style="border:1px solid #d3d3d3;">
 Your browser does not support the HTML5 canvas tag.</canvas>
 
 <script>
+
+var debug = false;
 
 var runnerRad = 6;
 var runnerLen = runnerRad * 2;
@@ -39,11 +41,10 @@ class Segment {
     this.num = num;
     this.start = start;
     this.end = end;
-	this.overtaking = overtaking;
-	this.lane = lane;
+    this.overtaking = overtaking;
+    this.lane = lane;
     this.length = Math.sqrt(Math.pow(this.end.x-this.start.x, 2) + 
                             Math.pow(this.end.y-this.start.y, 2));
-    this.runners = Math.floor(this.length / runnerLen);
   }
 }
 
@@ -57,83 +58,89 @@ var speedmin = 0;
 var mode = 'dulwich';
 
 if (mode == 'demo') {
-tokenText = new Point(250, 130);
-timerText = new Point(50, 130);
-timerVol = new Point(50, 140);
-tokenVol = new Point(250, 140);
-managerVol0 = new Point(70, 170);
-managerVol1 = new Point(70, 120);
-xspread1 = 10; xspread2 = 70;
-yspread1 =300; yspread2 = 300;
-speedmax = 3; speedmin = 2;
-segments.push(new Segment('finish', false, 0, new Point(0,0), new Point(50,150), true, -1));
-segments.push(new Segment('prefunnel',false, 0, new Point(50,150), new Point(70,150), false, -1));
-segments.push(new Segment('funnel0', true, 0, new Point(70,150), new Point(100,100), false, 0));
-segments.push(new Segment('funnel1', true, 0, new Point(70,150), new Point(100,200), false, 1));
-segments.push(new Segment('funnel0', true, 0, new Point(100,100), new Point(150,100), false, 0));
-segments.push(new Segment('funnel0', false, 1, new Point(150,100), new Point(200,125), false, 0));
-segments.push(new Segment('funnel1', false, 1, new Point(100,200), new Point(200,200), false, 1));
-segments.push(new Segment('postfunnel0', false, 0, new Point(200,125), new Point(250,150), false, 0));
-segments.push(new Segment('postfunnel1', false, 0, new Point(200,200), new Point(250,150), false, 1));
-segments.push(new Segment('off', false, 0, new Point(250,150), new Point(400,150), true, -1));
+  tokenText = new Point(250, 130);
+  timerText = new Point(50, 130);
+  timerVol = new Point(50, 140);
+  tokenVol = new Point(250, 140);
+  managerVol0 = new Point(70, 170);
+  managerVol1 = new Point(70, 120);
+  xspread1 = 10; xspread2 = 70;
+  yspread1 =300; yspread2 = 300;
+  speedmax = 3; speedmin = 2;
+  segments.push(new Segment('finish', false, 0, new Point(0,0), new Point(50,150), true, -1));
+  segments.push(new Segment('prefunnel',false, 0, new Point(50,150), new Point(70,150), false, -1));
+  segments.push(new Segment('funnel0', true, 0, new Point(70,150), new Point(100,100), false, 0));
+  segments.push(new Segment('funnel1', true, 0, new Point(70,150), new Point(100,200), false, 1));
+  segments.push(new Segment('funnel0', true, 0, new Point(100,100), new Point(150,100), false, 0));
+  segments.push(new Segment('funnel0', false, 1, new Point(150,100), new Point(200,125), false, 0));
+  segments.push(new Segment('funnel1', false, 1, new Point(100,200), new Point(200,200), false, 1));
+  segments.push(new Segment('postfunnel0', false, 0, new Point(200,125), new Point(250,150), false, 0));
+  segments.push(new Segment('postfunnel1', false, 0, new Point(200,200), new Point(250,150), false, 1));
+  segments.push(new Segment('off', false, 0, new Point(250,150), new Point(400,150), true, -1));
 } else {
-tokenText = new Point(100, 10);
-timerText = new Point(50, 170);
-timerVol = new Point(50, 180);
-tokenVol = new Point(100, 20);
-managerVol0 = new Point(70, 210);
-managerVol1 = new Point(70, 160);
-xspread1 = 10; xspread2 = 70;
-yspread1 =300; yspread2 = 300;
-speedmax = 3; speedmin = 2;
-segments.push(new Segment('finish', false, 0, new Point(0,0), new Point(50,200), true, -1));
-segments.push(new Segment('prefunnel',false, 0, new Point(50,200), new Point(70,190), false, -1));
-
-segments.push(new Segment('funnel0', true, 0, new Point(70,190), new Point(80,180), false, 0));
-segments.push(new Segment('funnel0', true, 1, new Point(80,180), new Point(160,100), false, 0));
-segments.push(new Segment('funnel0', false, 2, new Point(160,100), new Point(100,50), false, 0));
-
-segments.push(new Segment('funnel1', true, 0, new Point(70,190), new Point(80,200), false, 1));
-segments.push(new Segment('funnel1', true, 1, new Point(80,200), new Point(180,100), false, 1));
-segments.push(new Segment('funnel1', false, 2, new Point(180,100), new Point(120,50), false, 1));
-
-segments.push(new Segment('postfunnel0', false, 0, new Point(100,50), new Point(100,30), false, 0));
-segments.push(new Segment('postfunnel1', false, 0, new Point(120,50), new Point(100,30), false, 1));
-segments.push(new Segment('off', false, 0, new Point(100,30), new Point(400,30), true, -1));
-
+  tokenText = new Point(110, 10);
+  timerText = new Point(50, 170);
+  timerVol = new Point(50, 180);
+  tokenVol = new Point(110, 20);
+  managerVol0 = new Point(80, 200);
+  managerVol1 = new Point(75, 170);
+  xspread1 = 10; xspread2 = 70;
+  yspread1 =300; yspread2 = 300;
+  speedmax = 3; speedmin = 2;
+  // Entrance
+  segments.push(new Segment('finish', false, 0, new Point(0,0), new Point(55,205), true, -1));
+  segments.push(new Segment('prefunnel',false, 0, new Point(55,205), new Point(70,190), false, -1));
+  // Inside lane
+  segments.push(new Segment('funnel0', true, 0, new Point(70,190), new Point(150,110), false, 0));
+  segments.push(new Segment('funnel0', true, 1, new Point(150,110), new Point(150,100), false, 0));
+  segments.push(new Segment('funnel0', false, 2, new Point(150,100), new Point(100,50), false, 0));
+  // Outside lane
+  segments.push(new Segment('funnel1', true, 0, new Point(70,190), new Point(90,190), false, 1));
+  segments.push(new Segment('funnel1', true, 1, new Point(90,190), new Point(170,110), false, 1));
+  segments.push(new Segment('funnel1', true, 2, new Point(170,110), new Point(170,100), false, 1));
+  segments.push(new Segment('funnel1', false, 3, new Point(170,90), new Point(120,50), false, 1));
+  // Exit
+  segments.push(new Segment('postfunnel0', false, 0, new Point(100,50), new Point(110,30), false, 0));
+  segments.push(new Segment('postfunnel1', false, 0, new Point(120,50), new Point(110,30), false, 1));
+  segments.push(new Segment('off', false, 0, new Point(110,30), new Point(400,30), true, -1));
 }
 
 class Funnel {
 
   constructor(name) {
     this.name = name;
-	this.count = 0;
-	this.justopened = false;
+    this.count = 0;
+    this.justopened = false;
+    this.runnersMax = this.runners();
   }
   
   runners() {
-    var runners = 0;
+    var totalLen = 0;
     for (let i=0; i<segments.length; i++){
       if (segments[i].type == this.name) {
-          runners += segments[i].runners;
+          totalLen += segments[i].length;
       }
     }
-	// Subtract 1 to avoid entrance blockage
-	return runners - 1;
+    // Subtract 2 to avoid entrance blockage
+    return Math.floor(totalLen / runnerLen) - 2;
   }
   
   inc() {
     this.count++;
-	console.log(this.name + " Inc " + this.count);
-	if (this.count == this.runners()) {
-	  entranceManager.nextfunnel();
-	}
+    if (debug) {
+      console.log(this.name + " Inc " + this.count);
+    }
+    if (this.count == this.runnersMax) {
+      entranceManager.nextfunnel();
+    }
   }
   
   dec() {
-	  this.count--;
-	  console.log(this.name + "Dec " + this.count);
-	  numTokens++;
+    this.count--;
+    if (debug) {
+      console.log(this.name + "Dec " + this.count);
+    }
+    numTokens++;
   }
 }
 
@@ -142,8 +149,10 @@ var funnel0 = new Funnel('funnel0');
 var funnel1 = new Funnel('funnel1');
 funnel1.draining = false;
 
-console.log("Funnel 0 = " + funnel0.runners());
-console.log("Funnel 1 = " + funnel1.runners());
+if (debug) {
+  console.log("Funnel 0 = " + funnel0.runnersMax);
+  console.log("Funnel 1 = " + funnel1.runnersMax);
+}
 
 class EntranceManager {
 
@@ -155,12 +164,16 @@ class EntranceManager {
     if (this.filling == 'funnel0') {
 	  this.filling = 'funnel1';
 	  //this.redirectPrefunnel('prefunnel0','prefunnel1');
-	  console.log("FILL FUNNEL 1");
+          if (debug) {
+	    console.log("FILL FUNNEL 1");
+          }
 	  funnel1.justopened = true;
 	} else {
 	  this.filling = 'funnel0';
 	  //this.redirectPrefunnel('prefunnel1','prefunnel0');
-	  console.log("FILL FUNNEL 0");
+          if (debug) {
+	    console.log("FILL FUNNEL 0");
+          }
 	  funnel0.justopened = true;
 	}
   }
@@ -176,13 +189,18 @@ class ExitManager {
   nextfunnel(){
     if (this.draining == 'funnel0') {
 	  this.draining = 'funnel1';
-	  console.log("DRAIN FUNNEL 1");
+          if (debug) {
+	    console.log("DRAIN FUNNEL 1");
+          }
 	} else {
 	  this.draining = 'funnel0';
-	  console.log("DRAIN FUNNEL 0");
+          if (debug) {
+	    console.log("DRAIN FUNNEL 0");
+          }
 	}
   }
 }
+
 var entranceManager = new EntranceManager(funnel0, funnel1);
 var exitManager = new ExitManager(funnel0, funnel1);
 
@@ -279,24 +297,24 @@ class Runner {
     this.dx = 0;
     this.dy = 0;
     this.speed = 1;
-	this.stopped = true;
-	this.active = false;
+    this.stopped = true;
+    this.active = false;
     this.col = "";
     this.heading = segments[0];
     //this.start();
     this.first = false;
-	this.finisher = 0
+    this.finisher = 0
   }
 
   start() {
-	this.finisher = 0;
-	this.active = true;
-	this.stopped = false;
+    this.finisher = 0;
+    this.active = true;
+    this.stopped = false;
     this.heading = segments[0];
     this.x = xspread1 + Math.round(Math.random() * (xspread2-xspread1));
     this.y = yspread1 + Math.round(Math.random() * (yspread2-yspread1));
     this.setdxdy(course.speed(this.heading.type));
-	this.first = false;
+    this.first = false;
     switch ( Math.round(Math.random() * 4) ) {
       case 0:
         this.col = "brown";
@@ -320,34 +338,39 @@ class Runner {
                          Math.pow(this.heading.end.y - this.y, 2) );
     this.dx = speed * (this.heading.end.x - this.x) / mag;
     this.dy = speed * (this.heading.end.y - this.y) / mag;  
+    // boost if first in funnel
+    //if (this.first) {
+    //  this.dx *= 1.4;
+    //  this.dy *= 1.4;
+    //}
   }
 
   draw() {
     ctx.beginPath();
-	ctx.fillStyle = this.col;
-	if (!this.first) {
+    ctx.fillStyle = this.col;
+    if (!this.first) {
       ctx.arc(this.x, this.y, runnerRad, 0, Math.PI * 2, false);
-	  ctx.fill();
-	} else {
+      ctx.fill();
+    } else {
       ctx.arc(this.x, this.y, runnerRad, 0, Math.PI, false);
-	  ctx.fill();
-	  ctx.beginPath();
-	  ctx.arc(this.x, this.y, runnerRad, Math.PI / 2, Math.PI * 3 / 2, false);
-	  ctx.fill();
-	  ctx.fillStyle = "red";
-	  ctx.fillRect(this.x + 1, this.y - runnerRad - 1, runnerRad, runnerRad);
-	}
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, runnerRad, Math.PI / 2, Math.PI * 3 / 2, false);
+      ctx.fill();
+      ctx.fillStyle = "red";
+      ctx.fillRect(this.x + 1, this.y - runnerRad - 1, runnerRad, runnerRad);
+    }
   }
 
   move() {
     if ((Math.abs(this.heading.end.x - this.x) > Math.abs(this.dx)) ||
         (Math.abs(this.heading.end.y - this.y) > Math.abs(this.dy)) ) {
-	  if (this.stopped) {
-		// restart logic
-		if ((this.heading.type == 'postfunnel0' || this.heading.type == 'funnel0') &&
-		     (exitManager.draining == 'funnel0')) {
-		    this.stopped = false;
-			if (this.heading.type == 'postfunnel0') funnel0.dec();
+      if (this.stopped) {
+	// restart logic
+	if ((this.heading.type == 'postfunnel0' || this.heading.type == 'funnel0') &&
+	     (exitManager.draining == 'funnel0')) {
+	    this.stopped = false;
+		if (this.heading.type == 'postfunnel0') funnel0.dec();
 		} else if ((this.heading.type == 'postfunnel1' || this.heading.type == 'funnel1') &&
 		     (exitManager.draining == 'funnel1')) {
 		    this.stopped = false;
@@ -369,7 +392,9 @@ class Runner {
 					// back pressure
 					var comingtogether = false;
 					if (ourmovedDist < currentDist && theirmovedDist < currentDist) {
-						console.log("COMING TOGETHER");
+                                                if (debug) {
+						  console.log("COMING TOGETHER");
+                                                }
 						comingtogether = true;
 					}
 					if (ourmovedDist < currentDist && !comingtogether &&
@@ -393,7 +418,7 @@ class Runner {
       // change heading
       this.heading = course.nextseg(this.heading, true, 0);
       //console.log("nextseg " + this.heading.type + " " + this.heading.num);
-	  // set increment
+      // set increment
       this.setdxdy(course.speed(this.heading.type));
 	  if (this.heading.type == 'prefunnel') {
 	    numFinishers++;
@@ -419,16 +444,24 @@ class Runner {
 	  if (this.heading.type == 'funnel0' && this.heading.num == 0) {
 	    funnel0.inc();
 		if (funnel0.justopened){
-		  console.log("FUNNEL 0 OPENED");
+                  if (debug) {
+		    console.log("FUNNEL 0 OPENED");
+                  }
 		  this.first = true;
+                  //this.dx *= 1.4;
+                  //this.dy *= 1.4;
 		  funnel0.justopened = false;
 		}
 	  }
 	  if (this.heading.type == 'funnel1' && this.heading.num == 0) {
 	    funnel1.inc();
 		if (funnel1.justopened){
-		  console.log("FUNNEL 1 OPENED");
+                  if (debug) {
+		    console.log("FUNNEL 1 OPENED");
+                  }
 		  this.first = true;
+                  //this.dx *= 1.4;
+                  //this.dy *= 1.4;
 		  funnel1.justopened = false;
 		}
 	  }
@@ -449,8 +482,8 @@ class Runner {
 
 function drawAndMove(item, index, arr) {
   if (item.active) {
-    item.draw();
     item.move();
+    item.draw();
     item.recycle(300, 300);
   }
 }
@@ -464,13 +497,52 @@ for(let i = 0; i < runners.length; i++){
 
 function drawVol(x,y,txt){
   ctx.beginPath();
-  ctx.rect(x-runnerRad, y-runnerRad, 2*runnerRad, 2*runnerRad);
+  ctx.rect(x-runnerRad, y-runnerRad, runnerLen, runnerLen);
   ctx.strokeStyle = "black";
   ctx.stroke();
   ctx.fillStyle = "yellow";
   ctx.fill();
   ctx.fillStyle = "black";
   ctx.fillText(txt, x, y + (ctx.measureText('M').width/2));
+}
+
+function drawFixtures(){
+  if (mode == 'dulwich'){
+    ctx.lineJoin = "round";
+    ctx.lineWidth = 10;
+    ctx.fillStyle = 'lightgreen';
+    ctx.strokeStyle = 'lightgreen';
+    ctx.beginPath();
+    ctx.moveTo(50, 190);
+    ctx.lineTo(140,105);
+    ctx.lineTo(50, 20);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.fill();
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(85, 185);
+    ctx.lineTo(165, 105);
+    ctx.lineTo(110, 50);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(60, 210);
+    ctx.lineTo(70, 200);
+    ctx.lineTo(90, 200);
+    ctx.lineTo(185, 105);
+    ctx.lineTo(130, 50);
+    ctx.stroke();
+    resetContext();
+  }
+}
+
+function resetContext(){
+   ctx.lineJoin = "round";
+   ctx.lineWidth = 1;
+   ctx.lineJoin = "bevel";
+   ctx.fillStyle = "black";
+   ctx.strokeStyle = "black";
 }
 
 function releaseRunner() {
@@ -482,12 +554,29 @@ function releaseRunner() {
 	}
 }
 
+function drawGrid(width){
+    for (var x = 0; x <= 300; x += width) {
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, 300);
+    }
+
+
+    for (var x = 0; x <= 300; x += width) {
+        ctx.moveTo(0, x);
+        ctx.lineTo(300, x);
+    }
+
+    ctx.strokeStyle = "grey";
+    ctx.stroke();
+}
+
+
 function init() {
   window.requestAnimationFrame(draw);
 }
 
 var ticks = 0;
-var fastPeriod = 80;
+var fastPeriod = 75;
 var slowPeriod = 140;
 var currentPeriod = fastPeriod;
 
@@ -500,8 +589,15 @@ function draw() {
   ctx.clearRect(0, 0, 300, 300); // clear canvas
   ctx.font = '12px Arial';
   ctx.textAlign = "center";
+
+  if (debug) {
+    drawGrid(10);
+    course.draw();
+  }
+
+  drawFixtures();
+
   runners.forEach(drawAndMove);
-  course.draw();
 
   ctx.fillStyle = "black";
   ctx.fillText(numFinishers, timerText.x, timerText.y);
@@ -515,18 +611,24 @@ function draw() {
     drawVol(managerVol1.x, managerVol1.y, 'M');
   }
 
-  var filled = (funnel0.count + funnel1.count)/(funnel0.runners() + funnel1.runners());
+  var filled = (funnel0.count + funnel1.count)/(funnel0.runnersMax + funnel1.runnersMax);
   if (filled > 0.75 && currentPeriod == fastPeriod) {
-	  console.log("Slowing down");
+          if (debug) {
+        	  console.log("Slowing down");
+          }
 	  currentPeriod = slowPeriod;
   }
   if (filled < 0.25 && currentPeriod == slowPeriod) {
-	  console.log("Speeding up");
+          if (debug) {
+	    console.log("Speeding up");
+          }
 	  currentPeriod = fastPeriod;
   }
   
   if (ticks%currentPeriod == 0) {
-      console.log("filled = " + filled);
+      if (debug) {
+        console.log("filled = " + filled);
+      }
 	  releaseRunner();
   }
 
