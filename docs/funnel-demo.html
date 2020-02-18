@@ -28,7 +28,7 @@ var ticks = 0;
 var message1 = "Waiting for finishers";
 var message2 = "";
 var messageTime = 0;
-var messageDuration = 100;
+var messageDuration = 180;
 
 class Point {
 
@@ -151,8 +151,12 @@ class Funnel {
 
   dec() {
     this.count--;
+    this.inFront--;
     if (debug) {
-      console.log(this.name + "Dec " + this.count);
+      console.log(this.name + " Dec " + this.count);
+    }
+    if (this.inFront == 0) {
+      console.log(this.name + " Clear before marker");
     }
   }
 }
@@ -188,6 +192,10 @@ class EntranceManager {
       }
       funnel1.justopened = true;
       setMessage("Filling second funnel", "Give marker to finisher");
+      funnel1.inFront = funnel1.count;
+      if (funnel1.inFront == 0) {
+        console.log("F1 Clear before marker");
+      }
     } else {
       this.filling = 'funnel0';
       //this.redirectPrefunnel('prefunnel1','prefunnel0');
@@ -196,6 +204,11 @@ class EntranceManager {
       }
       funnel0.justopened = true;
       setMessage("Filling first funnel", "Give marker to finisher");
+	  
+      funnel0.inFront = funnel0.count;
+      if (funnel0.inFront == 0) {
+        console.log("F0 Clear before marker");
+      }
     }
   }
 
@@ -213,13 +226,13 @@ class ExitManager {
       if (debug) {
         console.log("DRAIN FUNNEL 1");
       }
-      setMessage("Empty second funnel", "");
+      setMessage("Can see marker","Empty second funnel");
     } else {
       this.draining = 'funnel0';
       if (debug) {
         console.log("DRAIN FUNNEL 0");
       }
-      setMessage("Empty first funnel", "");
+      setMessage("Can see marker", "Empty first funnel");
     }
   }
 }
@@ -386,6 +399,13 @@ class Runner {
     if ((Math.abs(this.segment.end.x - this.x) > Math.abs(this.dx)) ||
         (Math.abs(this.segment.end.y - this.y) > Math.abs(this.dy)) ) {
       // free to move within segment
+      if (this.first) {
+        if (this.segment.type == 'funnel0' && exitManager.draining == 'funnel0' && !this.segment.more && funnel0.inFront == 0) {
+          exitManager.nextfunnel();
+        } else if (this.segment.type == 'funnel1' && exitManager.draining == 'funnel1' && !this.segment.more && funnel1.inFront == 0) {
+          exitManager.nextfunnel();
+        }
+      }
       if (this.stopped) {
         // restart logic
         if ((this.segment.type == 'postfunnel0' || this.segment.type == 'funnel0') &&
@@ -453,6 +473,7 @@ class Runner {
       if ((this.segment.type == 'postfunnel0' && this.first && exitManager.draining == 'funnel0') ||
           (this.segment.type == 'postfunnel1' && this.first && exitManager.draining == 'funnel1')) {
         this.stopped = true;
+        setMessage("Marker reaches end", "Stop and wait");
         exitManager.nextfunnel();
         return;
       }
@@ -460,6 +481,7 @@ class Runner {
       if ((this.segment.type == 'postfunnel0' && this.first && exitManager.draining != 'funnel0') ||
           (this.segment.type == 'postfunnel1' && this.first && exitManager.draining != 'funnel1')) {
         this.stopped = true;
+        setMessage("Marker reaches end", "Stop and wait");
         return;
       }
       // exiting funnel
@@ -610,7 +632,7 @@ function init() {
 }
 
 var fastPeriod = 75;
-var slowPeriod = 140;
+var slowPeriod = 130;
 var currentPeriod = fastPeriod;
 
 function draw() {
