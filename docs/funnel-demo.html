@@ -23,6 +23,12 @@ var framesPerSec = 60;
 var oneLenPerSec = runnerLen / framesPerSec;
 var numFinishers = 0;
 var numTokens = 0;
+var ticks = 0;
+
+var message1 = "Waiting for finishers";
+var message2 = "";
+var messageTime = 0;
+var messageDuration = 100;
 
 class Point {
 
@@ -54,6 +60,8 @@ var timerVol;
 var tokenVol;
 var managerVol0;
 var managerVol1;
+var messagePosition;
+
 var xspread1 = 0;
 var xspread2 = 0;
 var yspread1 = 0;
@@ -83,6 +91,7 @@ if (mode == 'demo') {
   segments.push(new Segment('postfunnel1', false, 0, new Point(200,200), new Point(250,150), false, 1));
   segments.push(new Segment('off', false, 0, new Point(250,150), new Point(400,150), true, -1));
 } else {
+  messagePosition = new Point(200,200);
   tokenText = new Point(110, 10);
   timerText = new Point(50, 170);
   timerVol = new Point(50, 180);
@@ -158,6 +167,12 @@ if (debug) {
   console.log("Funnel 1 = " + funnel1.runnersMax);
 }
 
+function setMessage(text1, text2) {
+  message1 = text1;
+  message2 = text2;
+  messageTime = ticks;
+}
+
 class EntranceManager {
 
   constructor(funnel0, funnel1){
@@ -172,6 +187,7 @@ class EntranceManager {
         console.log("FILL FUNNEL 1");
       }
       funnel1.justopened = true;
+      setMessage("Filling second funnel", "Give marker to finisher");
     } else {
       this.filling = 'funnel0';
       //this.redirectPrefunnel('prefunnel1','prefunnel0');
@@ -179,6 +195,7 @@ class EntranceManager {
         console.log("FILL FUNNEL 0");
       }
       funnel0.justopened = true;
+      setMessage("Filling first funnel", "Give marker to finisher");
     }
   }
 
@@ -196,11 +213,13 @@ class ExitManager {
       if (debug) {
         console.log("DRAIN FUNNEL 1");
       }
+      setMessage("Empty second funnel", "");
     } else {
       this.draining = 'funnel0';
       if (debug) {
         console.log("DRAIN FUNNEL 0");
       }
+      setMessage("Empty first funnel", "");
     }
   }
 }
@@ -425,6 +444,9 @@ class Runner {
       this.setdxdy(course.speed(this.segment.type));
       if (this.segment.type == 'prefunnel') {
         numFinishers++;
+        if (numFinishers == 1) {
+          setMessage("Filling first funnel", "");
+        }
         this.finisher = numFinishers;
       }
       // First in a draining funnel so stop and switch funnel
@@ -512,6 +534,13 @@ function drawVol(x,y,txt){
   ctx.fillText(txt, x, y + (ctx.measureText('M').width/2));
 }
 
+function drawMessage(){
+  if (ticks - messageTime < messageDuration) {
+    ctx.fillText(message1, messagePosition.x, messagePosition.y);
+    ctx.fillText(message2, messagePosition.x, messagePosition.y + ctx.measureText('M').width + 1);
+  }
+}
+
 function drawFixtures(){
   if (mode == 'dulwich'){
     ctx.lineJoin = "round";
@@ -580,7 +609,6 @@ function init() {
   window.requestAnimationFrame(draw);
 }
 
-var ticks = 0;
 var fastPeriod = 75;
 var slowPeriod = 140;
 var currentPeriod = fastPeriod;
@@ -607,6 +635,8 @@ function draw() {
   ctx.fillStyle = "black";
   ctx.fillText(numFinishers, timerText.x, timerText.y);
   ctx.fillText(numTokens, tokenText.x, tokenText.y);
+
+  drawMessage();
 
   drawVol(timerVol.x, timerVol.y, 'T');
   drawVol(tokenVol.x, tokenVol.y, 'P');
