@@ -145,7 +145,6 @@ class Funnel {
     if (debug) {
       console.log(this.name + "Dec " + this.count);
     }
-    numTokens++;
   }
 }
 
@@ -367,6 +366,7 @@ class Runner {
   move() {
     if ((Math.abs(this.segment.end.x - this.x) > Math.abs(this.dx)) ||
         (Math.abs(this.segment.end.y - this.y) > Math.abs(this.dy)) ) {
+      // free to move within segment
       if (this.stopped) {
         // restart logic
         if ((this.segment.type == 'postfunnel0' || this.segment.type == 'funnel0') &&
@@ -413,6 +413,7 @@ class Runner {
         }
       }
     } else {
+      // at end of segment
       // clamp to the destination
       //console.log("clamping " + this.segment.type + " " + this.segment.num);
       this.x = this.segment.end.x;
@@ -426,16 +427,16 @@ class Runner {
         numFinishers++;
         this.finisher = numFinishers;
       }
-      // First in a draining funnel so stop
+      // First in a draining funnel so stop and switch funnel
       if ((this.segment.type == 'postfunnel0' && this.first && exitManager.draining == 'funnel0') ||
           (this.segment.type == 'postfunnel1' && this.first && exitManager.draining == 'funnel1')) {
         this.stopped = true;
         exitManager.nextfunnel();
         return;
       }
-      // Not a draining funnel so stop
-      if ((this.segment.type == 'postfunnel0' && exitManager.draining != 'funnel0') ||
-          (this.segment.type == 'postfunnel1' && exitManager.draining != 'funnel1')) {
+      // Not a draining funnel so just stop 
+      if ((this.segment.type == 'postfunnel0' && this.first && exitManager.draining != 'funnel0') ||
+          (this.segment.type == 'postfunnel1' && this.first && exitManager.draining != 'funnel1')) {
         this.stopped = true;
         return;
       }
@@ -470,6 +471,9 @@ class Runner {
       // past tokens
       if (this.segment.type == 'off') {
         this.first = false;
+        numTokens++;
+        // recalc speed
+        this.setdxdy(course.speed(this.segment.type));
       }
     }
   }
